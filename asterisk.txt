@@ -1,0 +1,204 @@
+pjsip.conf{
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+
+[transport-tcp]
+type=transport
+protocol=tcp
+bind=0.0.0.0:5061
+
+[3300]
+type=endpoint
+transport=transport-udp
+context=from-internal
+disallow=all
+allow=opus            ; Pozwól na użycie kodeka Opus
+allow=ulaw            ; Dodatkowy kodek (opcjonalny)
+allow=alaw
+allow=speex
+auth=auth3300
+aors=3300
+
+[auth3300]
+type=auth
+auth_type=userpass
+username=3300
+password=adm
+
+[3300]
+type=aor
+max_contacts=10
+
+; Konfiguracja endpointa dla 2200
+[2200]
+type=endpoint
+transport=transport-udp
+context=from-internal
+disallow=all
+allow=all
+auth=auth2200
+aors=2200
+
+; Konfiguracja autoryzacji dla 2200
+[auth2200]
+type=auth
+auth_type=userpass
+username=2200
+password=adm  ;Użyj mocnego hasła
+
+; Konfiguracja AOR dla 2200
+[2200]
+type=aor
+max_contacts=10
+
+[3301]
+type=endpoint
+transport=transport-udp
+context=from-internal
+disallow=all
+allow=all
+auth=auth3301
+aors=3301
+
+[auth3301]
+type=auth
+auth_type=userpass
+username=3301
+password=adm
+
+[3301]
+type=aor
+max_contacts=10
+}
+
+extconfig.conf{
+[settings]
+ps_endpoints => pgsql,asterisk_db,asterisk.v_endpoints
+ps_auths => pgsql,asterisk_db,asterisk.v_auths
+ps_aors => pgsql,asterisk_db,asterisk.v_aors
+}
+
+sorcery.conf{
+[res_pjsip]
+endpoint=realtime,ps_endpoints
+auth=realtime,ps_auths
+aor=realtime,ps_aors
+}
+
+res_pgsql.conf {
+[general]
+dbhost=127.0.0.1
+dbport=5432
+dbname=asterisk_db
+schema=asterisk_db
+dbuser=asterisk
+dbpass=123123
+dbappname=Asterisk
+;dbsock=/var/run/postgresql/.s.PGSQL.5432
+}
+
+
+logger.conf {
+[logfiles]
+messages => notice,warning,error,security
+
+security => security
+
+full => notice,warning,error,debug,verbose
+}
+
+
+extensions.conf {
+[from-internal]
+exten => _XXXX,1,NoOp(Internal call to ${EXTEN})
+same => n,Dial(PJSIP/${EXTEN})
+same => n,Hangup
+
+exten => _XXX,1,NoOp(Internal call to ${EXTEN})
+same => n,Dial(PJSIP/${EXTEN},15)
+
+exten => _X.,1,GoTo(to-external, ${EXTEN})
+
+[from-external]
+exten => _X.,1,NoOp(External call)
+
+[to-external]
+exten => _X.,1,NoOp(CTX to-external, this ll cal via provider to ${EXTEN})
+same => n,Hangup
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE ps_auths (
+    id VARCHAR(40) PRIMARY KEY,
+    auth_type VARCHAR(40),
+    password VARCHAR(80),
+    username VARCHAR(80)
+);
+
+
+
+CREATE TABLE ps_endpoints (
+    id VARCHAR(40) PRIMARY KEY,
+    transport VARCHAR(20),
+    aors VARCHAR(40),
+    auth VARCHAR(40),
+    context VARCHAR(40),
+    disallow VARCHAR(100),
+    allow VARCHAR(100),
+    direct_media VARCHAR(10)
+)
+
+
+CREATE TABLE ps_aors (
+    id VARCHAR(40) PRIMARY KEY,
+    max_contacts INT
+);
+
+
+INSERT INTO ps_endpoints (id, transport, aors, auth, context, disallow, allow, direct_media)
+VALUES
+    ('2200', 'transport-udp', '2200', '2200', 'default', 'all', 'all', 'no'),
+    ('3300', 'transport-udp', '3300', '3300', 'default', 'all', 'all', 'no'),
+    ('4400', 'transport-udp', '4400', '4400', 'default', 'all', 'all', 'no'),
+    ('5500', 'transport-udp', '5500', '5500', 'default', 'all', 'all', 'no'),
+    ('6600', 'transport-udp', '6600', '6600', 'default', 'all', 'all', 'no'),
+    ('7700', 'transport-udp', '7700', '7700', 'default', 'all', 'all', 'no'),
+    ('8800', 'transport-udp', '8800', '8800', 'default', 'all', 'all', 'no'),
+    ('9900', 'transport-udp', '9900', '9900', 'default', 'all', 'all', 'no');
+
+INSERT INTO ps_auths (id, auth_type, password, username)
+VALUES
+    ('2200', 'userpass', 'adm', '2200'),
+    ('3300', 'userpass', 'adm', '3300'),
+    ('4400', 'userpass', 'adm', '4400'),
+    ('5500', 'userpass', 'adm', '5500'),
+    ('6600', 'userpass', 'adm', '6600'),
+    ('7700', 'userpass', 'adm', '7700'),
+    ('8800', 'userpass', 'adm', '8800'),
+    ('9900', 'userpass', 'adm', '9900');
+
+-- Wstawianie danych do tabeli ps_aors
+INSERT INTO ps_aors (id, max_contacts)
+VALUES
+    ('2200', 10),
+    ('3300', 10),
+    ('4400', 10),
+    ('5500', 10),
+    ('6600', 10),
+    ('7700', 10),
+    ('8800', 10),
+    ('9900', 10);
+
