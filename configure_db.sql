@@ -17,7 +17,8 @@ CREATE TABLE pjsip.endpoints (
     context VARCHAR(40),
     disallow VARCHAR(100),
     allow VARCHAR(100),
-    direct_media VARCHAR(10)
+    direct_media VARCHAR(10),
+    mailboxes VARCHAR(40)
 );
 
 CREATE TABLE pjsip.aors (
